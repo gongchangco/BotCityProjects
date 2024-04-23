@@ -7,7 +7,7 @@ on your Python environment.
 Also, if you are using PyCharm or another IDE, make sure that you use the SAME Python interpreter
 as your IDE.
 
-If you get an error like:
+If you get an error:
 ```
 ModuleNotFoundError: No module named 'botcity'
 ```
@@ -26,6 +26,12 @@ from botcity.web import WebBot, Browser, By
 
 # Import for integration with BotCity Maestro SDK
 from botcity.maestro import *
+import pandas as pd
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Disable errors if we are not connected to Maestro
 BotMaestroSDK.RAISE_NOT_CONNECTED = False
@@ -47,16 +53,36 @@ def main():
     bot.headless = False
 
     # Uncomment to change the default Browser to Firefox
-    # bot.browser = Browser.FIREFOX
+    bot.browser = Browser.FIREFOX
 
     # Uncomment to set the WebDriver path
-    # bot.driver_path = "<path to your WebDriver binary>"
+    bot.driver_path = os.getenv("DRIVER_PATH")
+
+    excel_path = os.getenv("EXCEL_PATH")
+    filename = os.path.basename(excel_path)
+    df = pd.read_excel(filename)
 
     # Opens the BotCity website.
-    bot.browse("https://www.botcity.dev")
+    bot.browse("https://forms.gle/1jZefq2JBy7aYGZJ6")
+    bot.wait(3000)
 
     # Implement here your logic...
-    ...
+    for index, row in df.iterrows():
+        name_input_field = bot.find_element("//div[contains(@data-params, 'Name')]//input", By.XPATH)
+        name_input_field.send_keys(row['Name'])
+
+        age_input_field = bot.find_element("//div[contains(@data-params, 'Age')]//input", By.XPATH)
+        age_input_field.send_keys(row['Age'])
+
+        city_input_field = bot.find_element("//div[contains(@data-params, 'City')]//input", By.XPATH)
+        city_input_field.send_keys(row['City'])
+
+        submit_btn = bot.find_element("//span[text()='Submit']", By.XPATH)
+        submit_btn.click()
+        bot.wait(1000)
+
+        submit_another_response_link = bot.find_element("//a[text()='Submit another response']", By.XPATH)
+        submit_another_response_link.click()
 
     # Wait 3 seconds before closing
     bot.wait(3000)
